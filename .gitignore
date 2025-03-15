@@ -1,0 +1,6 @@
+.aws
+node_modules
+build
+venv
+.terraform*
+*tfstate*

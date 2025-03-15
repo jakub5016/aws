@@ -1,0 +1,25 @@
+Using Boto3 as AWS connection 
+To install terraform i used guide from 'https://developer.hashicorp.com/terraform/install' for linux
+
+Apperently CLI for Elastic Beanstalk is written in python https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install.html
+
+To config aws session token use `aws configure set aws_session_token`
+
+To get current Account, userID etc. run `aws sts get-caller-identity`
+
+==============================================================================================================================
+Config for elasticbeanstalk
+
+Tier - Web server environment
+Application Name - Backend
+Env name - Backend-env
+Platform - Docker
+Code - upload code as docker
+Version lablel - 1
+
+USE EXISTING SERVICE ROLE
+Existing service roles - "LabRole"
+EC2 instance profile - "LabInstanceProfile"
+Instance subnets - us-east-1d
+Instance type - t3.nano
+Managed updates - deactivated
