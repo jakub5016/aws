@@ -1,12 +1,22 @@
-resource "aws_elastic_beanstalk_application" "backend" {
-  name = "Backend"
+variable "backend_url" {}
+
+resource "aws_elastic_beanstalk_application" "fronted" {
+  name = "Fronted"
 }
 
-resource "aws_elastic_beanstalk_environment" "backend_env" {
-  name                = "Backend-env"
-  application         = aws_elastic_beanstalk_application.backend.name
-  solution_stack_name = "64bit Amazon Linux 2023 v4.4.4 running Docker"
+resource "aws_elastic_beanstalk_application_version" "fronted_version" {
+  name        = "1"
+  application = aws_elastic_beanstalk_application.fronted.name
+  bucket      = aws_s3_bucket.app_bucket.id
+  key         = aws_s3_bucket_object.app_version.key
+}
+
+resource "aws_elastic_beanstalk_environment" "fronted_env" {
+  name                = "fronted-env"
+  application         = aws_elastic_beanstalk_application.fronted.name
+  solution_stack_name = "64bit Amazon Linux 2 v3.4.5 running Docker" # Ensure this version is up to date
   tier                = "WebServer"
+  version_label       = aws_elastic_beanstalk_application_version.fronted_version.name
 
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
@@ -49,8 +59,10 @@ resource "aws_elastic_beanstalk_environment" "backend_env" {
     name      = "ManagedActionsEnabled"
     value     = "false"
   }
-}
 
-output "backend_url" {
-  value = aws_elastic_beanstalk_environment.backend_env.endpoint_url
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name      = "REACT_APP_API_URL"
+    value     = var.backend_url
+  }
 }

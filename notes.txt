@@ -8,6 +8,14 @@ To config aws session token use `aws configure set aws_session_token`
 To get current Account, userID etc. run `aws sts get-caller-identity`
 
 ==============================================================================================================================
+To install on AWS Cloud9
+`sudo yum install -y yum-utils shadow-utils
+sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+sudo yum -y install terraform`
+
+
+
+==============================================================================================================================
 Config for elasticbeanstalk
 
 Tier - Web server environment

@@ -10,7 +10,7 @@ function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [activeTab, setActiveTab] = useState('chat'); 
 
-  const backendUrl = 'http://localhost:5000';
+  const backendUrl = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     if (activeTab === 'chat') {
