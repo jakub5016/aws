@@ -1,3 +1,5 @@
+variable "vpc" {}
+variable "subnet" {}
 variable "backend_url" {}
 
 resource "aws_elastic_beanstalk_application" "fronted" {
