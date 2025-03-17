@@ -1,6 +1,11 @@
 variable "vpc" {}
 variable "subnet" {}
 
+resource "aws_s3_object" "backend_object" {
+  bucket = module.bucket.bucket_name
+  key    = "backend-app.zip"
+}
+
 resource "aws_elastic_beanstalk_application" "backend" {
   name = "Backend"
 }

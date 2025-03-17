@@ -6,11 +6,17 @@ resource "aws_elastic_beanstalk_application" "fronted" {
   name = "Fronted"
 }
 
+resource "aws_s3_object" "backend_object" {
+  bucket = module.bucket.bucket_name
+  key    = "frontend-app.zip"
+}
+
+
 resource "aws_elastic_beanstalk_application_version" "fronted_version" {
   name        = "1"
   application = aws_elastic_beanstalk_application.fronted.name
-  bucket      = aws_s3_bucket.app_bucket.id
-  key         = aws_s3_bucket_object.app_version.key
+  bucket      = aws_s3_bucket.main_bucket.id
+  key         = aws_s3_object.frontend_app_zip.key
 }
 
 resource "aws_elastic_beanstalk_environment" "fronted_env" {

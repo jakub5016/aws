@@ -8,9 +8,12 @@ resource "aws_s3_object" "backend_app_zip" {
   source = "./project/backend/backend-app.zip"
 }
 
-
-resource "aws_s3_object" "frontend-app" {
+resource "aws_s3_object" "frontend_app_zip" {
   bucket = aws_s3_bucket.main_bucket.id
   key    = "frontend-app.zip"
   source = "./project/fronted/frontend-app.zip"
+}
+
+output "bucket_name" {
+  value = aws_s3_bucket.main_bucket.bucket
 }
