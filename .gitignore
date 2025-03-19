@@ -4,3 +4,5 @@ build
 venv
 .terraform*
 *tfstate*
+*tfvars*
+*.zip

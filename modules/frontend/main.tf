@@ -1,35 +1,30 @@
 variable "vpc" {}
 variable "subnet" {}
 variable "backend_url" {}
+variable "bucket_name" {}
 
 resource "aws_elastic_beanstalk_application" "fronted" {
   name = "Fronted"
 }
 
-resource "aws_s3_object" "backend_object" {
-  bucket = module.bucket.bucket_name
-  key    = "frontend-app.zip"
-}
-
-
 resource "aws_elastic_beanstalk_application_version" "fronted_version" {
   name        = "1"
   application = aws_elastic_beanstalk_application.fronted.name
-  bucket      = aws_s3_bucket.main_bucket.id
-  key         = aws_s3_object.frontend_app_zip.key
+  bucket      = var.bucket_name
+  key         = "frontend-app-zipped"
 }
 
 resource "aws_elastic_beanstalk_environment" "fronted_env" {
   name                = "fronted-env"
   application         = aws_elastic_beanstalk_application.fronted.name
-  solution_stack_name = "64bit Amazon Linux 2 v3.4.5 running Docker" # Ensure this version is up to date
+  solution_stack_name = "64bit Amazon Linux 2023 v4.4.4 running Docker"
   tier                = "WebServer"
   version_label       = aws_elastic_beanstalk_application_version.fronted_version.name
 
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "InstanceType"
-    value     = "t3.nano"
+    value     = "t3.small"
   }
 
   setting {

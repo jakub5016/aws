@@ -9,7 +9,7 @@ function App() {
   const [gallery, setGallery] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [activeTab, setActiveTab] = useState('chat'); 
-
+  const [showLodaing, setShowLoading] = useState(true)
   const backendUrl = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
@@ -22,8 +22,9 @@ function App() {
 
   const fetchMessages = async () => {
     try {
-      const response = await axios.get(`${backendUrl}/messages`);
+      const response = await axios.get(`http://${backendUrl}/messages`);
       setMessages(response.data);
+      setShowLoading(false)
     } catch (error) {
       console.error('Błąd podczas pobierania wiadomości:', error);
     }
@@ -31,8 +32,9 @@ function App() {
 
   const fetchGallery = async () => {
     try {
-      const response = await axios.get(`${backendUrl}/gallery`);
+      const response = await axios.get(`http://${backendUrl}/gallery`);
       setGallery(response.data);
+      setShowLoading(false)
     } catch (error) {
       console.error('Błąd podczas pobierania galerii:', error);
     }
@@ -41,7 +43,7 @@ function App() {
   const sendMessage = async () => {
     if (!username || !messageText) return;
     try {
-      await axios.post(`${backendUrl}/message`, {
+      await axios.post(`http://${backendUrl}/message`, {
         username,
         message: messageText
       });
@@ -57,7 +59,7 @@ function App() {
     const formData = new FormData();
     formData.append('file', selectedFile);
     try {
-      await axios.post(`${backendUrl}/upload`, formData, {
+      await axios.post(`http://${backendUrl}/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setSelectedFile(null);
@@ -68,7 +70,7 @@ function App() {
   };
 
   return (
-    <div className="app-container">
+    <div className="app-container shadow mt-5">
       <div className="switch-container">
         <button
           className={activeTab === 'chat' ? 'active' : ''}
@@ -85,9 +87,27 @@ function App() {
       </div>
 
       {activeTab === 'chat' && (
-        <div className="chat-container">
-          <h2>Chat grupowy</h2>
-          <div className="chat-input">
+        <div className="chat-container shadow-sm">
+          <h2 className='border-bottom border-primary p-2'>Chat grupowy</h2>
+          {showLodaing && (
+            <div className='d-flex justify-content-center mb-3'>
+              <div className="spinner-border text-primary" style={{"width": "3rem", "height": "3rem"}}>
+              </div>
+            </div>
+          )}
+
+          {!showLodaing && (
+          <div className="chat-messages">
+            {messages.map((msg, idx) => (
+              <div key={idx} className="message">
+                <span className="message-username">{msg.username}:</span>
+                <span className="message-text">{msg.message}</span>
+              </div>
+            ))}
+          </div>
+          )}
+
+          <div className="chat-input border-top border-primary pt-2">
             <input
               type="text"
               placeholder="Twoje imię"
@@ -101,33 +121,33 @@ function App() {
             />
             <button onClick={sendMessage}>Wyślij</button>
           </div>
-          <div className="chat-messages">
-            {messages.map((msg, idx) => (
-              <div key={idx} className="message">
-                <span className="message-username">{msg.username}:</span>
-                <span className="message-text">{msg.message}</span>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
       {activeTab === 'gallery' && (
-        <div className="gallery-container">
-          <h2>Galeria</h2>
-          <div className="upload-container">
-            <input type="file" onChange={(e) => setSelectedFile(e.target.files[0])} />
-            <button onClick={uploadFile}>Prześlij plik</button>
-          </div>
+        <div className="gallery-container shadow-sm">
+          <h2 className='border-bottom border-primary p-2'>Galeria</h2>
+          {showLodaing && (
+            <div className='d-flex justify-content-center'>
+              <div className="spinner-border text-primary" style={{"width": "3rem", "height": "3rem"}}>
+              </div>
+            </div>
+          )}
+          {!showLodaing && (
           <div className="gallery-grid">
             {gallery.map((filename, idx) => (
               <img
                 key={idx}
-                src={`${backendUrl}/uploads/${filename}`}
+                src={`http://${backendUrl}/uploads/${filename}`}
                 alt={filename}
                 className="gallery-image"
               />
             ))}
+          </div>
+          )}
+          <div className="input-group pt-2">
+            <input className='form-control' type="file" onChange={(e) => setSelectedFile(e.target.files[0])} />
+            <button className='btn btn-primary' onClick={uploadFile}>Prześlij plik</button>
           </div>
         </div>
       )}

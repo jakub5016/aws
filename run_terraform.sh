@@ -1,3 +1,7 @@
-zip ./project/backend/backend-app.zip ./project/backend
-zip ./project/frontend/frontend-app.zip ./project/frontend
-terraform apply
+terraform init
+cd ./project/backend
+zip -r backend-app.zip .
+cd ../frontend
+zip -r frontend-app.zip ./src ./public Dockerfile package.json
+cd ../..
+terraform apply --auto-approve

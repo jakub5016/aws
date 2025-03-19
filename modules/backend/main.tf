@@ -1,10 +1,6 @@
 variable "vpc" {}
 variable "subnet" {}
-
-resource "aws_s3_object" "backend_object" {
-  bucket = module.bucket.bucket_name
-  key    = "backend-app.zip"
-}
+variable "bucket_name" {}
 
 resource "aws_elastic_beanstalk_application" "backend" {
   name = "Backend"
@@ -13,16 +9,16 @@ resource "aws_elastic_beanstalk_application" "backend" {
 resource "aws_elastic_beanstalk_application_version" "backend_version" {
   name        = "1"
   application = aws_elastic_beanstalk_application.backend.name
-  bucket      = aws_s3_bucket.main_bucket.id
-  key         = aws_s3_object.backend_app_zip.key
+  bucket      = var.bucket_name
+  key         = "backend-app-zipped"
 }
 
 resource "aws_elastic_beanstalk_environment" "backend_env" {
-  name                = "backend-envv"
+  name                = "backend-env"
   application         = aws_elastic_beanstalk_application.backend.name
-  solution_stack_name = "64bit Amazon Linux 2 v3.4.5 running Docker" # Ensure this version is up to date
+  solution_stack_name = "64bit Amazon Linux 2023 v4.4.4 running Docker"
   tier                = "WebServer"
-  version_label       = aws_elastic_beanstalk_application_version.fronted_version.name
+  version_label       = aws_elastic_beanstalk_application_version.backend_version.name
 
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
@@ -66,8 +62,4 @@ resource "aws_elastic_beanstalk_environment" "backend_env" {
     value     = "false"
   }
 
-}
-
-output "backend_url" {
-  value = aws_elastic_beanstalk_environment.backend_env.endpoint_url
 }

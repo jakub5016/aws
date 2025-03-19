@@ -5,7 +5,7 @@ import os
 
 app = Flask(__name__)
 CORS(app)
-swagger = Swagger(app)  # Inicjalizacja Swaggera
+swagger = Swagger(app)
 
 messages = []
 gallery = []

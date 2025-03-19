@@ -1,12 +1,15 @@
 variable "vpc" {}
 variable "subnet" {}
-
+variable "repo_directory" {
+  
+}
 provider "aws" {
   region = "us-east-1"
 }
 
 module "bucket" {
   source    = "./modules/bucket"
+  repo_directory = var.repo_directory
 }
 
 module "backend" {
@@ -14,6 +17,7 @@ module "backend" {
   depends_on = [module.bucket]
   vpc= var.vpc
   subnet= var.subnet
+  bucket_name = module.bucket.bucket_name
 }
 
 module "frontend" {
@@ -22,4 +26,5 @@ module "frontend" {
   backend_url = module.backend.backend_url
   vpc= var.vpc
   subnet= var.subnet
+  bucket_name = module.bucket.bucket_name
 }
