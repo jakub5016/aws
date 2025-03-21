@@ -1,6 +1,11 @@
 variable "vpc" {}
-variable "subnet" {}
 variable "bucket_name" {}
+variable "subnet1" {}
+variable "subnet2" {}
+
+variable "db_username" {}
+variable "db_password" {}
+variable "security_group" {}
 
 resource "aws_elastic_beanstalk_application" "backend" {
   name = "Backend"
@@ -23,7 +28,7 @@ resource "aws_elastic_beanstalk_environment" "backend_env" {
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "InstanceType"
-    value     = "t3.nano"
+    value     = "t3.small"
   }
 
   setting {
@@ -47,7 +52,7 @@ resource "aws_elastic_beanstalk_environment" "backend_env" {
   setting {
     namespace = "aws:ec2:vpc"
     name      = "Subnets"
-    value     = var.subnet
+    value     = "${var.subnet1}, ${var.subnet2}"
   }
 
   setting {
@@ -61,5 +66,45 @@ resource "aws_elastic_beanstalk_environment" "backend_env" {
     name      = "ManagedActionsEnabled"
     value     = "false"
   }
-
+  # RDS Settings
+  setting {
+    namespace = "aws:rds:dbinstance"
+    name      = "DBEngine"
+    value     = "mysql"
+  }
+  setting {
+    namespace = "aws:rds:dbinstance"
+    name      = "DBAllocatedStorage"
+    value     = 10
+  }
+  setting {
+    namespace = "aws:rds:dbinstance"
+    name = "DBInstanceClass"
+    value = "db.t3.small"
+  }
+  setting {
+    namespace = "aws:rds:dbinstance"
+    name = "DBEngineVersion"
+    value = "8.0.40"
+  }
+  setting {
+    namespace = "aws:rds:dbinstance"
+    name = "DBPassword"
+    value = var.db_password
+  }
+  setting {
+    namespace = "aws:rds:dbinstance"
+    name = "DBUser"
+    value = var.db_username
+  }
+  setting {
+    namespace = "aws:rds:dbinstance"
+    name = "HasCoupledDatabase"
+    value = true
+  }
+  setting {
+    namespace = "aws:ec2:vpc"
+    name      = "DBSubnets"
+    value     = "${var.subnet1}, ${var.subnet2}"
+  }
 }

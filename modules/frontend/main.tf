@@ -1,7 +1,12 @@
 variable "vpc" {}
-variable "subnet" {}
+variable "subnet1" {}
 variable "backend_url" {}
 variable "bucket_name" {}
+variable "user_pool_id" {}
+variable "app_client_id" {}
+variable "cognito_domain" {}
+
+
 
 resource "aws_elastic_beanstalk_application" "fronted" {
   name = "Fronted"
@@ -48,7 +53,7 @@ resource "aws_elastic_beanstalk_environment" "fronted_env" {
   setting {
     namespace = "aws:ec2:vpc"
     name      = "Subnets"
-    value     = var.subnet
+    value     = var.subnet1
   }
 
   setting {
@@ -67,5 +72,20 @@ resource "aws_elastic_beanstalk_environment" "fronted_env" {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "REACT_APP_API_URL"
     value     = var.backend_url
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name      = "REACT_USER_POOL_ID"
+    value     = var.user_pool_id
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name      = "REACT_APP_CLIENT_ID"
+    value     = var.app_client_id
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name      = "REACT_COGNITO_DOMAIN"
+    value     = var.cognito_domain
   }
 }

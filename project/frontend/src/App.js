@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css'; 
+import './amplifyConfig'; 
+import { Auth } from 'aws-amplify';
+
+import {
+  CognitoUserPool,
+} from "amazon-cognito-identity-js";
+
+const poolData = {
+  UserPoolId: process.env.REACT_USER_POOL_ID,
+  ClientId: process.env.REACT_APP_CLIENT_ID,
+};
+
+export const userPool = new CognitoUserPool(poolData);
 
 function App() {
   const [messages, setMessages] = useState([]);
@@ -68,6 +81,20 @@ function App() {
       console.error('Błąd podczas przesyłania pliku:', error);
     }
   };
+
+  const signUp = async (email, password) => {
+    try {
+      await Auth.signUp({
+        username: email,
+        password,
+        attributes: { email },
+      });
+      console.log("User signed up");
+    } catch (error) {
+      console.error("Sign up error", error);
+    }
+  };
+
 
   return (
     <div className="app-container shadow mt-5">

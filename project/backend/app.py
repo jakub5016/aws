@@ -1,20 +1,46 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from flasgger import Swagger
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import text
+
 import os
+import boto3
+from botocore.exceptions import ClientError
+from config import Config
+from models import db, Message, File
 
 app = Flask(__name__)
 CORS(app)
 swagger = Swagger(app)
-
-messages = []
-gallery = []
+app.config.from_object(Config)
+db.init_app(app)
+with app.app_context():
+    db.create_all()
+s3_client = boto3.client('s3')
 
 UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 
+@app.route("/check_db")
+def check_db():
+    """
+    Sprawdź baze danych
+    ---
+    responses:
+      200:
+        description: sprawdzenie bazy danych
+        schema:
+          type: json
+    """
+    try:
+        db.session.execute(text("SELECT 1")) 
+        return jsonify({"status": "success", "message": "Database connected!"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    
 @app.route('/messages', methods=['GET'])
 def get_messages():
     """
@@ -33,7 +59,10 @@ def get_messages():
               message:
                 type: string
     """
-    return jsonify(messages)
+    all_messages = Message.query.all()
+    messages_json = [{"username": msg.name, "message": msg.message} for msg in all_messages]
+
+    return jsonify(messages_json)
 
 
 @app.route('/gallery', methods=['GET'])
@@ -49,6 +78,8 @@ def get_gallery():
           items:
             type: string
     """
+    all_files = File.query.all()
+    gallery = [gallery_file.file_name for gallery_file in all_files]
     return jsonify(gallery)
 
 
@@ -80,10 +111,10 @@ def post_message():
     data = request.get_json()
     if not data or 'username' not in data or 'message' not in data:
         return jsonify({'error': 'Błędne dane'}), 400
-    messages.append({
-        'username': data['username'],
-        'message': data['message']
-    })
+
+    new_message = Message(name=data['username'], message=data['message'])
+    db.session.add(new_message)
+    db.session.commit()
     return jsonify({'status': 'Wiadomość dodana'}), 201
 
 
@@ -110,9 +141,16 @@ def upload_file():
     file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'Nie wybrano pliku'}), 400
-    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
-    file.save(file_path)
-    gallery.append(file.filename)
+
+    try:
+        s3_client.upload_fileobj(file, "awsbuckera", file.filename)
+        new_file=File(file_name=file.filename)
+        db.session.add(new_file)
+        db.session.commit()
+        
+    except ClientError as e:
+        print(e)
+
     return jsonify({'status': 'Plik przesłany', 'filename': file.filename}), 201
 
 
@@ -132,7 +170,8 @@ def uploaded_file(filename):
       404:
         description: Plik nie istnieje
     """
-    return send_from_directory(UPLOAD_FOLDER, filename)
+    obj = s3_client.get_object(Bucket="awsbuckera", Key=filename)
+    return Response(obj['Body'].read(), content_type=obj['ContentType'])
 
 
 if __name__ == '__main__':
