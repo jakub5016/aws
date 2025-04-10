@@ -11,22 +11,6 @@
     margin-bottom: 20px;
   }
   
-  .switch-container button {
-    background-color: #f0f0f0;
-    border: 1px solid #ddd;
-    padding: 10px 20px;
-    margin: 0 5px;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background-color 0.3s ease;
-  }
-  
-  .switch-container button.active,
-  .switch-container button:hover {
-    background-color: #007bff;
-    color: #fff;
-  }
-  
   /* Style dla chatu */
   .chat-container {
     border: 1px solid #ddd;

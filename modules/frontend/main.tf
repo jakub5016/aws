@@ -2,10 +2,8 @@ variable "vpc" {}
 variable "subnet1" {}
 variable "backend_url" {}
 variable "bucket_name" {}
-variable "user_pool_id" {}
 variable "app_client_id" {}
-variable "cognito_domain" {}
-
+variable "app_client_secret" {}
 
 
 resource "aws_elastic_beanstalk_application" "fronted" {
@@ -61,22 +59,10 @@ resource "aws_elastic_beanstalk_environment" "fronted_env" {
     name      = "ServiceRole"
     value     = "LabRole"
   }
-
-  setting {
-    namespace = "aws:elasticbeanstalk:managedactions"
-    name      = "ManagedActionsEnabled"
-    value     = "false"
-  }
-
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "REACT_APP_API_URL"
     value     = var.backend_url
-  }
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name      = "REACT_USER_POOL_ID"
-    value     = var.user_pool_id
   }
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
@@ -85,7 +71,7 @@ resource "aws_elastic_beanstalk_environment" "fronted_env" {
   }
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
-    name      = "REACT_COGNITO_DOMAIN"
-    value     = var.cognito_domain
+    name = "REACT_APP_CLIENT_SECRET"
+    value = var.app_client_secret
   }
 }

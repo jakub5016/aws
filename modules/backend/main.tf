@@ -5,7 +5,10 @@ variable "subnet2" {}
 
 variable "db_username" {}
 variable "db_password" {}
-variable "security_group" {}
+
+variable "app_client_id" {}
+variable "app_client_secret" {}
+variable "user_pool_id" {}
 
 resource "aws_elastic_beanstalk_application" "backend" {
   name = "Backend"
@@ -60,11 +63,16 @@ resource "aws_elastic_beanstalk_environment" "backend_env" {
     name      = "ServiceRole"
     value     = "LabRole"
   }
-
+  # Cloudwach 
   setting {
-    namespace = "aws:elasticbeanstalk:managedactions"
-    name      = "ManagedActionsEnabled"
-    value     = "false"
+    namespace = "aws:elasticbeanstalk:cloudwatch:logs"
+    name      = "StreamLogs"
+    value     = "true"
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:cloudwatch:logs"
+    name      = "DeleteOnTerminate"
+    value     = "true"
   }
   # RDS Settings
   setting {
@@ -106,5 +114,28 @@ resource "aws_elastic_beanstalk_environment" "backend_env" {
     namespace = "aws:ec2:vpc"
     name      = "DBSubnets"
     value     = "${var.subnet1}, ${var.subnet2}"
+  }
+
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name      = "APP_CLIENT_ID"
+    value     = var.app_client_id
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name = "APP_CLIENT_SECRET"
+    value = var.app_client_secret
+  }
+
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name = "AWS_REGION"
+    value = "us-east-1"
+  }
+
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name = "USER_POOL_ID"
+    value = var.user_pool_id
   }
 }

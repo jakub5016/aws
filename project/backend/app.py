@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from flasgger import Swagger
 from flask_sqlalchemy import SQLAlchemy
+import requests
 from sqlalchemy.sql import text
 
 import os
@@ -9,20 +10,66 @@ import boto3
 from botocore.exceptions import ClientError
 from config import Config
 from models import db, Message, File
+from authlib.jose import JsonWebToken
 
 app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY', "secretkey") 
 CORS(app)
+
 swagger = Swagger(app)
 app.config.from_object(Config)
+
 db.init_app(app)
 with app.app_context():
     db.create_all()
 s3_client = boto3.client('s3')
 
-UPLOAD_FOLDER = 'uploads'
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+CLIENT_ID =  os.getenv('APP_CLIENT_ID')
+CLIENT_SECRET =  os.getenv('APP_CLIENT_SECRET')
+AWS_REGION= os.getenv("AWS_REGION", "us-east-1")
+USER_POOL_ID = os.getenv("USER_POOL_ID")
 
+JWKS_URL = f"https://cognito-idp.{AWS_REGION}.amazonaws.com/{USER_POOL_ID}/.well-known/jwks.json"
+
+def get_jwks():
+    response = requests.get(JWKS_URL)
+    response.raise_for_status()
+    return response.json()
+
+@app.before_request
+def check_oauth_token():
+    if request.method == 'OPTIONS':
+        return None
+    
+    forbidden_paths = ['/message', '/gallery', '/upload']
+    unable_to_show = False
+    for path in forbidden_paths:
+        if request.path.startswith(path):
+            unable_to_show = True
+
+    if not unable_to_show:
+        return None
+
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({'error': 'Missing authorization header', 'message': f"Got headers: {request.headers}"}), 401
+
+    parts = auth_header.split()
+    if len(parts) != 2 or parts[0].lower() != 'bearer':
+        return jsonify({'error': 'Invalid authorization header format'}), 401
+
+    token = parts[1]
+    try:
+        jwks = get_jwks()
+        jwt = JsonWebToken(["RS256"])
+        claims = jwt.decode(token, key=jwks, claims_options={
+            "exp": {"essential": True},
+            "aud": {"essential": True, "value": CLIENT_ID},
+            "iss": {"essential": True, "value": f"https://cognito-idp.{AWS_REGION}.amazonaws.com/{USER_POOL_ID}"}
+        })
+        claims.validate()
+    except Exception as e:
+        return jsonify({'error': 'Invalid token', 'message': str(e)}), 401
 
 @app.route("/check_db")
 def check_db():
@@ -141,6 +188,13 @@ def upload_file():
     file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'Nie wybrano pliku'}), 400
+
+    def _allowed_file(filename):
+      ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff'}
+      return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+    if not _allowed_file(file.filename):
+        return jsonify({'error': 'Nieobsługiwany format pliku'}), 400
 
     try:
         s3_client.upload_fileobj(file, "awsbuckera", file.filename)
